@@ -38,7 +38,10 @@ public class PlayerHealth : LivingEntity {
 
     // 체력 회복
     public override void RestoreHealth(float newHealth) {
-        // LivingEntity의 RestoreHealth() 실행 (체력 증가)
+		// LivingEntity의 RestoreHealth() 실행 (체력 증가)
+		if ( health + newHealth > startingHealth ) {
+			newHealth = startingHealth - health;
+		}
         base.RestoreHealth(newHealth);
 		healthSlider.value = health;
     }
@@ -62,6 +65,9 @@ public class PlayerHealth : LivingEntity {
 
 		playerAudioPlayer.PlayOneShot(deathClip);
 		playerAnimator.SetTrigger("Die");
+
+		playerMovement.enabled = false;
+		playerShooter.enabled = false;
     }
 
     private void OnTriggerEnter(Collider other) {

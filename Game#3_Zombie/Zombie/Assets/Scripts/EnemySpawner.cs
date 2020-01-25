@@ -16,6 +16,9 @@ public class EnemySpawner : MonoBehaviour {
     public float speedMax = 3f; // 최대 속도
     public float speedMin = 1f; // 최소 속도
 
+	public float spawnTime = 15f; //소환 주기
+	public float recentSpawn = 0f;
+
     public Color strongEnemyColor = Color.red; // 강한 적 AI가 가지게 될 피부색
 
     private List<Enemy> enemies = new List<Enemy>(); // 생성된 적들을 담는 리스트
@@ -29,8 +32,9 @@ public class EnemySpawner : MonoBehaviour {
         }
 
         // 적을 모두 물리친 경우 다음 스폰 실행
-        if (enemies.Count <= 0)
+        if (enemies.Count <= 0||Time.time>=recentSpawn+spawnTime)
         {
+			recentSpawn = Time.time;
             SpawnWave();
         }
 
@@ -46,9 +50,32 @@ public class EnemySpawner : MonoBehaviour {
 
     // 현재 웨이브에 맞춰 적을 생성
     private void SpawnWave() {
+		wave++;
+		int spawnCount = Mathf.RoundToInt(wave * 1.5f);
+		for(int i=0;i<spawnCount;i++ ) {
+			float enemyIntensity = Random.Range(0f, 1f);
+			CreateEnemy(enemyIntensity);
+		}
     }
 
     // 적을 생성하고 생성한 적에게 추적할 대상을 할당
     private void CreateEnemy(float intensity) {
-    }
+		float health = Mathf.Lerp(healthMin, healthMax, intensity);
+		float damage = Mathf.Lerp(damageMin, damageMax, intensity);
+		float speed = Mathf.Lerp(speedMin, speedMax, intensity);
+
+		Color skinColor = Color.Lerp(Color.white, strongEnemyColor, intensity);
+
+		Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
+
+		Enemy enemy = Instantiate(enemyPrefab, spawnPoint.position, spawnPoint.rotation);
+
+		enemy.Setup(health, damage, speed, skinColor);
+
+		enemies.Add(enemy);
+
+		enemy.onDeath += () => enemies.Remove(enemy);
+		enemy.onDeath += () => Destroy(enemy.gameObject, 10f);
+		enemy.onDeath += () => GameManager.instance.AddScore(100);
+	}
 }
